@@ -1,17 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import css from './ContactForm.module.css';
 // Redux
 import { useSelector, useDispatch } from "react-redux";
-import { getFilteredContacts } from 'redux/contacts/contacts-selectors';
-import { addContact } from "redux/contacts/contacts-slice";
+import { getFilteredContacts, getState } from 'redux/contacts/contacts-selectors';
+import { addContact } from "redux/contacts/contacts-operation";
+import { fetchContacts } from "redux/contacts/contacts-operation";
+
 
 export const ContactForm = () => {
 
     const [name, setName] = useState('');
-    const [number, setNumber] = useState('');
+    const [phone, setPhone] = useState('');
 
     const contacts = useSelector(getFilteredContacts);
+    const { loading, error } = useSelector(getState);
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(fetchContacts());
+    }, [dispatch]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -19,27 +26,29 @@ export const ContactForm = () => {
         if (name === "name") {
             return setName(value);
         }
-        if (name === "number") {
-            return setNumber(value);
+        if (name === "phone") {
+            return setPhone(value);
         }
     }
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const contact = {name, number};
-        if (isDublicate(contact)) {
-            return alert(`${contact.name} is already in contacts.`);
-        }
-        const action = addContact(contact);
+        const contact = {name, phone};
+        // if (isDublicate(contact)) {
+        //     return alert(`${contact.name} is already in contacts.`);
+        // }
+        console.log(e.target.elements.name.value)
+        console.log(e.target.elements.phone.value)
+        const action = addContact(e.target.elements.name.value);
         dispatch(action);
         setName('');
-        setNumber('');
+        setPhone('');
     }
 
-    function isDublicate({ name }) {
-        const result = contacts.find((contact) => contact.name === name);
-        return result;
-    }
+    // function isDublicate({ name }) {
+    //     const result = contacts.find((contact) => contact.name === name);
+    //     return result;
+    // }
 
     return (
         <form className={css.contactForm} onSubmit={handleSubmit}>
@@ -58,8 +67,8 @@ export const ContactForm = () => {
             <label className={css.contactForm__field}> Number
                 <input className={css.contactForm__input}
                     type="tel"
-                    name="number"
-                    value={number}
+                    name="phone"
+                    value={phone}
                     pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
                     title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
                     required
