@@ -2,8 +2,9 @@ import * as api from "shared/api/contactsAPI";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 function isDublicate({ name }, contacts) {
-    const result = contacts.find((contact) => contact.name === name);
-    return result;
+    const normalizedName = name.toLowerCase();
+    const result = contacts.find((contact) => contact.name.toLowerCase() === normalizedName);
+    return Boolean(result);
 }
 
 export const fetchContacts = createAsyncThunk(
@@ -13,26 +14,27 @@ export const fetchContacts = createAsyncThunk(
             const data = await api.getContacts();
             return data;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.message);
+            return thunkAPI.rejectWithValue(error);
         }
     }
 )
 
 export const addContact = createAsyncThunk(
     "contacts/addContact",
-    async (text, thunkAPI) => {
+    async (data, thunkAPI) => {
         try {
-            const result = await api.addContact(text);
+            const result = await api.addContact(data);
             return result;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.message);
+            return thunkAPI.rejectWithValue(error);
         }
     },
     {
-        condition: (data, { getState }) => {
-            const contacts = getState();
+        condition: (data, { getState }, thunkAPI) => {
+            const {contacts} = getState();
             if (isDublicate(data, contacts.items)) {
-                return alert(`${data.name} is already in contacts.`);
+                alert(`${data.name} is already in contacts.`);
+                return thunkAPI.rejectWithValue;
             }
         }
     }
@@ -45,7 +47,7 @@ export const deleteContact = createAsyncThunk(
             await api.deleteContact(id);
             return id;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.message);
+            return thunkAPI.rejectWithValue(error);
         }
     }
 )
